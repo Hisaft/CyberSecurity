@@ -15,13 +15,13 @@
 
 ## <span id="概述">概述</span>
 该PSI方法基于蚂蚁的Secretflow框架实现，现阶段可以实现双容器之间的沟通，单服务器多容器尚在实现，多服务器多容器由于条件不允许，暂时无法实现。该PSI仅尝试Secretflow官方推荐的使用docker的host网络去实现。
-[back to the top $\uparrow$](#top)
+[back to the top](#top)
 ## <span id="环境">环境</span>
 * OS : Ubuntu 18.04.5 LTS
 * CPU: Xeon Gold 6326 x2, 32-cores
 * Memory : 384GB
 * Secretflow Version: 1.0.0b3
-[back to the top $\uparrow$](#top)
+[back to the top](#top)
 ## <span id="具体实现">具体实现</span>
 以下分为几部分来分析具体实现
 ### <span id="容器配置">容器配置</span>
@@ -30,7 +30,7 @@
 docker run -it --network --name XXX secretflow-registry.cn-hangzhou.cr.aliyuncs.com/secretflow/secretflow-lite-anolis8:1.0.0b3
 # secretflow-registry.cn-hangzhou.cr.aliyuncs.com/secretflow/secretflow-lite-anolis8:1.0.0b3
 ```
-这里并未使用本地的镜像，按照使用docker安装的教程中的描述尝试过下载，但因网络原因下载速度较慢，换用该镜像源。由于安装容器的数量不多，安装速度并未产生影响，以及日常使用的secretflow框架是使用conda和pypi安装，所以并未将镜像安装到本地。现在服务器上留存有三个容器: *sfnet1*, *sfnet2*, *sfnet3*。[back to the top $\uparrow$](#top)
+这里并未使用本地的镜像，按照使用docker安装的教程中的描述尝试过下载，但因网络原因下载速度较慢，换用该镜像源。由于安装容器的数量不多，安装速度并未产生影响，以及日常使用的secretflow框架是使用conda和pypi安装，所以并未将镜像安装到本地。现在服务器上留存有三个容器: *sfnet1*, *sfnet2*, *sfnet3*。[back to the top](#top)
 ### <span id="Ray集群配置">Ray集群配置</span>
 现阶段Secretflow和Ray的相性不是很好，基本上只兼容2.2.0版本的Ray（高版本的Ray会导致Secretflow的import失败），或者不安装Ray（部分ray的指令可能无法生效）。对*sfnet1*（alice, *sfnet2*（bob）和 *sfnet3* （carol）进行配置。
 
@@ -81,7 +81,7 @@ Demands:
  (no resource demands)
 ```
 （这里应该指定一下CPU的数量，每一次“ray start”都会选择全部的CPU核心（64个逻辑核心），然后执行了3次。但对结果影响不是很大）
-[back to the top $\uparrow$](#top)
+[back to the top](#top)
 ### <span id="开始前的测试">开始前的测试</span>
 由于环境本身还处于开发阶段，在开始运行程序之前一般会先看一下框架能否正常加载
 一般是以
@@ -97,7 +97,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 这样的方式去检验环境是否存在问题
 
 **例如**，在解决容器配置的问题的时候，曾经尝试过安装raylet，结果安装完以后按照上面运行就会出现"*No module named 'fed.proxy.grpc*'"这样的问题出现，由于框架本身较新且还处于开发中的原因，对于其他的库的兼容性应该很值得改进。
-[back to the top $\uparrow$](#top)
+[back to the top](#top)
 ### <span id = "psi_d">双方PSI</span>
 ```python
 import secretflow as sf
@@ -187,11 +187,11 @@ spu_psi.psi_csv('uid',input_path,output_path,'alice')
 ```python
 spu_psi.psi_csv(['uid','month'],input_path,output_path,'alice')
 ```
-[back to the top $\uparrow$](#top)
+[back to the top](#top)
 
 ### <span id = "psi_m">多方PSI<span>
-待更新[back to the top $\uparrow$](#top)
+待更新[back to the top](#top)
 
 ### <span id="problem">一些问题</span>
 
-[back to the top $\uparrow$](#top)
+[back to the top](#top)
