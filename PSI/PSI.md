@@ -197,8 +197,59 @@ spu_psi.psi_csv(['uid','month'],input_path,output_path,'alice')
 [back to the top](#top)
 
 ### <span id = "psi_m">多方PSI<span>
-待更新
+由于已经建立了第三个容器，所以这里的多方先选取三方作为代表。三方PSI运用的理论和双方的相对类似，但是再Secretflow框架下的构建还是略有差异。
 
+部分组件加入了第三方相关内容的初始化
+```python
+data_carol = data.sample(frac=0.4)
+# 第三方数据集的初始化
+carol = sf.PYU('carol')
+# PYU的初始化
+cluster_def={
+    'nodes': [
+        {
+            'party': 'alice',
+            'address': '192.168.11.93:5000',
+        },
+        {
+            'party': 'bob',
+            'address': '192.168.11.93:5000',
+        },
+        {   
+            'party': 'carol',
+            'address': '192.168.11.93:5000',
+        },
+    ],...
+}
+# 集群配置中加入了第三方的地址
+input_path = {alice:'.data/alice.csv' , bob: '.data/bob.csv', carol: '.data/carol.csv'}
+output_path = {alice:'.data/alice_psi.csv' , bob : '.data/bob_psi.csv', carol:'.data/carol_psi.csv'}
+# 输入输出方的路径添加
+```
+部分通信协议改动
+```python
+cluster_def={...
+    'runtime_config': {
+        'protocol': spu.spu_pb2.ABY3,
+        'field': spu.spu_pb2.FM64,
+        'sigmoid_mode': spu.spu_pb2.RuntimeConfig.SIGMOID_REAL,
+    }
+}
+# 协议改为ABY3
+```
+本来以为上述内容修改完成就可以正常运行
+但现在Secretflow的三方求交需要指定协议为"ECDH_PSI_3PC"
+```python
+# spu_psi.psi_csv(['uid','month'],input_path,output_path,'alice')
+# 上述代码会引起错误
+spu_psi.psi_csv(['uid','month'],input_path,output_path,'alice', protocol='ECDH_PSI_3PC')
+```
+最终输出（有修改过部分取样的概率，结果和双方的时候会有不同）
+```bash
+[{'party': 'alice', 'original_count': 120, 'intersection_count': 30},
+ {'party': 'bob', 'original_count': 105, 'intersection_count': 30},
+ {'party': 'carol', 'original_count': 60, 'intersection_count': 30}]
+```
 [back to the top](#top)
 
 ### <span id="problem">一些问题</span>
@@ -206,8 +257,7 @@ spu_psi.psi_csv(['uid','month'],input_path,output_path,'alice')
 1. 一方面是我个人在这个领域还是初学者，对这一块的知识还不是很熟练，加之在这个过程中还遇到了很多不同方面的没有接触过的内容，确实会存在一些对于新的内容的困惑，也在不断的学习中尽力去解决。
 2. 框架本身也算是不完美的。现在框架本身还处于开发状态，稳定性还是不错的（在配置正确的情况下基本没有出现过bug）。但是框架对于环境配置的要求还是比较严格的，像是固定版本的ray，以及安装后一些部件需要去升级或者降级（比如pydantic），有的时候东西装多了反而莫名其妙跑不起来（比如raylet）。
 3. 框架相关文档的完成度也不算完全。像是在配置docker容器的时候，文档在部署部分推荐使用host网络，但关于host网络的内容反而相对较少，而不推荐的bridge网络却写的很具体（有可能是host网络的配置相对简单吧），不过总体来说完成度还是不错的。
-4. 
-还有一些综合性的问题，这几个方面可能都是偏向于主观的。
+4. 还有一些综合性的问题，这几个方面可能都是偏向于主观的。
 * 像是对于框架中的SPU这一部件的作用，虽然在前面的课程和自学当中对这一部件已经有所了解，但在使用过程中，很难感觉到它到底是如何安全的处理数据的。主要是本人对于攻击方式的具体使用并不是很熟悉，所以就会感觉到好像经过这个SPU的计算返回的结果，和一个简单的筛选器并没有什么本质上的区别。前面我也试过用ElGamel加密的方法去实现一个spu，虽然效率上跟这个框架中的很有差距，暗示感觉还是直观一些。不过这个框架未来可能是会用于生产方面的话，这一点的意义就不是很大了
 * 也是这个SPU，现在还没有添加对于像是GPU的支持，现在的使用范围还是比较窄的，可能绝大部分的使用场景都在PSI这一部分，也是这次专注于PSI的原因。像是这两天添加了LLaMA-7B的密态模型的支持，但是只能推理，可能还无法做到训练。感觉相对还是有些遗憾的。其实小模型，像是一些简单的线性回归其实也没什么问题，前两天我也试过。
 
